@@ -13,7 +13,7 @@ GAPDoc2TextProcs.OtherThemes.default := rec(
   Heading := Concatenation(TextAttr.normal, TextAttr.underscore),
   Func := Concatenation(TextAttr.normal, TextAttr.4),
   Arg := Concatenation(TextAttr.normal, TextAttr.2),
-  Example := Concatenation(TextAttr.normal, TextAttr.0),
+  Example := Concatenation(TextAttr.normal, TextAttr.7),
   Package := TextAttr.bold,
   Returns := TextAttr.normal,
   URL := TextAttr.6,
@@ -232,11 +232,15 @@ InstallGlobalFunction(SetGAPDocTextTheme, function(arg)
       else
         Add(h[2], v);
       fi;
-    else
+    elif IsList(v) and Length(v) = 2 and IsString(v[1]) and IsString(v[2])
+        then
       Add(h[1], Concatenation(String(i-1), "X"));
       Add(h[2], v[1]);
       Add(h[1], Concatenation(String(100+i-1), "X"));
       Add(h[2], v[2]);
+    else
+      Error("SetGAPDocTextTheme: wrong argument, record components must\n",
+            "be a string or list of two strings.");
     fi;
     res.(af[i]) := [[h[1][2*i-1], h[1][2*i]],[h[2][2*i-1], h[2][2*i]]];
   od;

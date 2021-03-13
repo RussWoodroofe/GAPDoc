@@ -117,7 +117,7 @@ GAPDoc2HTMLProcs.Head1 := "\
 <head>\n\
 <title>GAP (";
 
-GAPDoc2HTMLProcs.MathJaxURL := "http://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+GAPDoc2HTMLProcs.MathJaxURL := "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
 
 GAPDoc2HTMLProcs.Head1MathJax := "\
 <?xml version=\"1.0\" encoding=\"UTF-8\"?>\n\
@@ -1031,7 +1031,7 @@ end;
 ##  the sectioning commands are just translated and labels are
 ##  generated, if given as attribute  
 GAPDoc2HTMLProcs.ChapSect := function(r, par, sect)
-  local   num, posh, s, ind, strn, lab, types, nrs, hord, a, pos, l, i;
+  local   num, posh, s, ind, strn, lab, lb, types, nrs, hord, a, pos, l, i;
   
   types := ["Chapter", "Appendix", "Section", "Subsection"];
   nrs := ["3", "3", "4", "5"];
@@ -1067,8 +1067,9 @@ GAPDoc2HTMLProcs.ChapSect := function(r, par, sect)
     
     # label entry, if present
     if IsBound(r.attributes.Label) then
-      r.root.labels.(r.attributes.Label) := [num, lab];
-      r.root.labeltexts.(r.attributes.Label) := s;
+      lb := NormalizedWhitespace(r.attributes.Label);
+      r.root.labels.(lb) := [num, lab];
+      r.root.labeltexts.(lb) := s;
     fi;
   
     # the heading text
@@ -1474,10 +1475,11 @@ end;
 
 ##  explicit labels
 GAPDoc2HTMLProcs.Label := function(r, str)
-  local num,  lab;
+  local num,  lab, lb;
   num := GAPDoc2HTMLProcs.SectionNumber(r.count, "Subsection");
   lab := GAPDoc2HTMLProcs.SectionLabel(r, r.count, "Subsection"); 
-  r.root.labels.(r.attributes.Name) := [num, Concatenation(lab[1],"#",lab[2])];
+  lb := NormalizedWhitespace(r.attributes.Name);
+  r.root.labels.(lb) := [num, Concatenation(lab[1],"#",lab[2])];
 end;
 
 ##  citations
@@ -1577,18 +1579,19 @@ GAPDoc2HTMLProcs.LikeFunc := function(r, par, typ)
   url := GAPDoc2HTMLProcs.SectionLabel(r, r.count, "Subsection");
   url := Concatenation(url[1],"#",url[2]);
   if IsBound(r.attributes.Label) then
-    lab := r.attributes.Label;
+    lab := NormalizedWhitespace(r.attributes.Label);
   else
     lab := "";
   fi;
-  Add(r.root.index, [STRING_LOWER(name), lab, 
+  Add(r.root.index, [STRING_LOWER(r.attributes.Name), lab, 
           GAPDoc2HTMLProcs.SectionNumber(r.count, "Subsection"), 
           Concatenation(attr[1], name, attr[2]),
           url]);
   # label (if not given, the default is the Name)
   if IsBound(r.attributes.Label) then
     if IsBound(r.attributes.Name) then
-      lab := Concatenation(r.attributes.Name, " (", r.attributes.Label, ")");
+      lab := Concatenation(r.attributes.Name, " (", 
+             NormalizedWhitespace(r.attributes.Label), ")");
     else
       lab := r.attributes.Label;
     fi;
@@ -1719,6 +1722,7 @@ GAPDoc2HTMLProcs.Ref := function(r, str)
       lab := r.attributes.Label;
     fi;
   fi;
+  lab := NormalizedWhitespace(lab);
   if IsBound(r.attributes.BookName) then
     ref := GAPDoc2HTMLProcs.ResolveExternalRef(r.attributes.BookName, lab, 1);
     if ref <> fail and ref[6] <> fail then
@@ -1810,7 +1814,7 @@ GAPDoc2HTMLProcs.Returns := function(r, par)
 end;
 
 GAPDoc2HTMLProcs.ManSection := function(r, par)
-  local   strn,  funclike,  i,  num,  s,  lab, ind;
+  local   strn,  funclike,  i,  num,  s,  lab, lb, ind;
   
   # if there is a Heading then handle as subsection
   if ForAny(r.content, a-> IsRecord(a) and a.name = "Heading") then
@@ -1847,8 +1851,9 @@ GAPDoc2HTMLProcs.ManSection := function(r, par)
 
   # label entry, if present
   if IsBound(r.attributes.Label) then
-    r.root.labels.(r.attributes.Label) := [num, lab];
-    r.root.labeltexts.(r.attributes.Label) := s;
+    lb := NormalizedWhitespace(r.attributes.Label);
+    r.root.labels.(lb) := [num, lab];
+    r.root.labeltexts.(lb) := s;
   fi;
 
   GAPDoc2HTMLContent(r, par);
@@ -2033,8 +2038,8 @@ GAPDoc2HTMLProcs.Table := function(r, s)
   fi;
   # label
   if IsBound(r.attributes.Label) then
-    GAPDoc2HTMLProcs.Label(rec(count := r.count, root := r.root, 
-              attributes := rec(Name := r.attributes.Label)), str);
+    GAPDoc2HTMLProcs.Label(rec(count := r.count, root := r.root, attributes := 
+                 rec(Name := NormalizedWhitespace(r.attributes.Label))), str);
   fi;
   # alignments, table has borders and lines everywhere if any | or HorLine
   # is specified
